@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Arduino KI Chat</title>
+  <style>
+    body { font-family: sans-serif; max-width: 700px; margin: 40px auto; padding: 0 10px; }
+    #chat { border: 1px solid #ccc; padding: 10px; height: 400px; overflow-y: auto; background: #f9f9f9; }
+    #msg { width: 100%; padding: 10px; margin-top: 10px; box-sizing: border-box; }
+    .user { font-weight: 600; margin: 6px 0; }
+    .ai { margin: 6px 0; color: #004aad; white-space: pre-wrap; }
+  </style>
+</head>
+<body>
+
+<h2>Arduino KI Chat</h2>
+<p>Frag nach Arduino‑Code, z. B.: „Mach Code für HC‑SR04“.</p>
+
+<div id="chat"></div>
+<input id="msg" placeholder="Nachricht eingeben und Enter drücken">
+
+<script>
+const chat = document.getElementById("chat");
+const input = document.getElementById("msg");
+
+// 👉 HIER DEIN GROQ API‑KEY EINTRAGEN
+const API_KEY = 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;
+
+async function sendMessage(text) {
+  chat.innerHTML += `<p class="user">Du: ${text}</p>`;
+  chat.scrollTop = chat.scrollHeight;
+
+  try {
+    const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: { 
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + API_KEY
+      },
+      body: JSON.stringify({
+        model: "llama3-70b-8192",
+        messages: [
+          { role: "system", content: "Du bist eine KI, die Arduino- und C++-Code schreibt, erklärt und debuggt. Antworte mit vollständigen Sketches." },
+          { role: "user", content: text }
+        ]
+      })
+    });
+
+    const data = await res.json();
+    const reply = data.choices?.[0]?.message?.content || "Keine Antwort erhalten.";
+    chat.innerHTML += `<p class="ai">KI: ${reply}</p>`;
+    chat.scrollTop = chat.scrollHeight;
+
+  } catch (err) {
+    chat.innerHTML += `<p class="ai">Fehler: ${err}</p>`;
+  }
+}
+
+input.addEventListener("keydown", (e) => {
+  if (e.key === "Enter" && input.value.trim() !== "") {
+    const text = input.value.trim();
+    input.value = "";
+    sendMessage(text);
+  }
+});
+</script>
+
+</body>
+</html>
